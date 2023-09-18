@@ -1,0 +1,150 @@
+# Code ML Zoomcamp 2023 - Homework #1
+
+#Question 1: Version of Pandas
+import pandas as pd
+print(pd.__version__)
+
+#Question 2: Number of columns in the dataset
+import pandas as pd
+
+# Load the dataset into a Pandas DataFrame
+df = pd.read_csv('california_housing_prices.csv')
+
+# Count the number of columns in the DataFrame
+num_columns = len(df.columns)
+
+# Print the number of columns
+print(num_columns)
+
+#Question 3: Select columns with missing data
+import pandas as pd
+
+# Load the dataset into a Pandas DataFrame
+df = pd.read_csv('california_housing_prices.csv')
+
+# Check for missing values in the DataFrame
+missing_values = df.isna().sum()
+
+# Print the columns with missing values
+print(missing_values[missing_values > 0].index)
+
+#Question 4: Number of unique values in the 'ocean_proximity' column
+import pandas as pd
+
+# Load the dataset into a Pandas DataFrame
+df = pd.read_csv('california_housing_prices.csv')
+
+# Count the number of unique values in the 'ocean_proximity' column
+num_unique_values = df['ocean_proximity'].nunique()
+
+# Print the number of unique values
+print(num_unique_values)
+
+#Question 5: Average value of the 'median_house_value' for the houses near the bay
+import pandas as pd
+
+# Load the dataset into a Pandas DataFrame
+df = pd.read_csv('california_housing_prices.csv')
+
+# Filter the DataFrame to only include houses located near the bay
+df_filtered = df[df['ocean_proximity'] == 'NEAR BAY']
+
+# Calculate the average value of the 'median_house_value' column
+average_median_house_value = df_filtered['median_house_value'].mean()
+
+# Print the average median house value
+print(average_median_house_value)
+
+#Question 6: Has the mean value changed after filling missing values?
+
+import pandas as pd
+
+# Load the dataset into a Pandas DataFrame
+df = pd.read_csv('california_housing_prices.csv')
+
+# Calculate the mean of the total_bedrooms column
+mean_total_bedrooms = df['total_bedrooms'].mean()
+
+# Fill the missing values in the total_bedrooms column with the mean value
+df['total_bedrooms'].fillna(mean_total_bedrooms, inplace=True)
+
+# Calculate the average of the total_bedrooms column again
+average_total_bedrooms_with_missing_values_filled = df['total_bedrooms'].mean()
+
+# Print the average total_bedrooms with missing values filled
+print(average_total_bedrooms_with_missing_values_filled)
+
+#To calculate the average of the total_bedrooms column again
+import pandas as pd
+
+# Load the dataset into a Pandas DataFrame
+df = pd.read_csv('california_housing_prices.csv')
+
+# Filter the DataFrame to only include houses with non-missing values in the total_bedrooms column
+df_filtered = df[df['total_bedrooms'].notnull()]
+
+# Calculate the average of the total_bedrooms column
+average_total_bedrooms_with_missing_values_removed = df_filtered['total_bedrooms'].mean()
+
+# Print the average total_bedrooms with missing values removed
+print(average_total_bedrooms_with_missing_values_removed)
+
+#Questions 7: Value of the last element of w
+
+#To select all the options located on islands and select only columns housing_median_age, total_rooms, total_bedrooms
+
+import pandas as pd
+
+# Load the dataset into a Pandas DataFrame
+df = pd.read_csv('california_housing_prices.csv')
+
+# Filter the DataFrame to only include houses located on islands
+df_filtered = df[df['ocean_proximity'] == 'ISLAND']
+
+# Select only the 'housing_median_age', 'total_rooms', and 'total_bedrooms' columns
+df_selected = df_filtered[['housing_median_age', 'total_rooms', 'total_bedrooms']]
+
+# Get the underlying NumPy array
+X = df_selected.to_numpy()
+
+#To compute matrix-matrix multiplication between the transpose of X and X
+import numpy as np
+
+# Compute the transpose of X
+X_T = X.T
+
+# Compute the matrix-matrix multiplication between the transpose of X and X
+XT_X = np.dot(X_T, X)
+
+#To compute the inverse of XTX
+import numpy as np
+
+# Compute the inverse of XTX
+XT_X_inv = np.linalg.inv(XT_X)
+
+#To create an array y with values [950, 1300, 800, 1000, 1300]
+import numpy as np
+
+# Create an array y with values [950, 1300, 800, 1000, 1300]
+y = np.array([950, 1300, 800, 1000, 1300])
+
+#To multiply the inverse of XTX with the transpose of X, and then multiply the result by y
+import numpy as np
+
+# Multiply the inverse of XTX with the transpose of X
+w = np.dot(XT_X_inv, np.dot(X_T, y))
+
+#Value of the last element of w
+print(w[-1])
+
+
+
+
+
+
+
+
+
+
+
+
