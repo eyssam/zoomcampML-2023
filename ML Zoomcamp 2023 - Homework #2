@@ -1,0 +1,166 @@
+#ML Zoomcamp 2023 - Homework #2
+#Question 1: Missing values*
+import pandas as pd
+
+# Load the house.csv dataset
+df = pd.read_csv('house.csv')
+
+# Check for missing values
+print(df.isna().sum())
+
+#Question 2: Median
+import pandas as pd
+
+# Load the house.csv dataset
+df = pd.read_csv('house.csv')
+
+# Calculate the median of population
+population_median = df['population'].median()
+
+# Print the median
+print(population_median)
+
+#Question 3: Missing values
+import pandas as pd
+import numpy as np
+
+# Load the house.csv dataset
+df = pd.read_csv('house.csv')
+
+# Shuffle the dataset
+df = df.sample(frac=1, random_state=42)
+
+# Split the dataset into train/val/test sets
+X_train, X_val, X_test, y_train, y_val, y_test = train_test_split(df.drop('price', axis=1), df['price'], test_size=0.4, random_state=42)
+
+# Apply the log transformation to the median_house_value variable
+y_train = np.log1p(y_train)
+y_val = np.log1p(y_val)
+y_test = np.log1p(y_test)
+
+# deal with the missing values in the total_rooms column
+from sklearn.linear_model import LinearRegression
+
+# Option 1: Fill missing values with 0
+X_train_with_0 = X_train.copy()
+X_train_with_0['total_rooms'].fillna(0, inplace=True)
+
+# Option 2: Fill missing values with mean
+X_train_with_mean = X_train.copy()
+total_rooms_mean = X_train_with_mean['total_rooms'].mean()
+X_train_with_mean['total_rooms'].fillna(total_rooms_mean, inplace=True)
+
+# Train linear regression models
+lr_with_0 = LinearRegression()
+lr_with_0.fit(X_train_with_0, y_train)
+
+lr_with_mean = LinearRegression()
+lr_with_mean.fit(X_train_with_mean, y_train)
+
+# Evaluate the models on the validation dataset
+y_pred_with_0 = lr_with_0.predict(X_val)
+y_pred_with_mean = lr_with_mean.predict(X_val)
+
+rmse_with_0 = np.sqrt(np.mean((y_pred_with_0 - y_val)**2))
+rmse_with_mean = np.sqrt(np.mean((y_pred_with_mean - y_val)**2))
+
+# Round the RMSE scores to 2 decimal digits
+rmse_with_0 = round(rmse_with_0, 2)
+rmse_with_mean = round(rmse_with_mean, 2)
+
+# Print the results
+print('RMSE with 0:', rmse_with_0)
+print('RMSE with mean:', rmse_with_mean)
+
+#Question 4: Regularization
+from sklearn.linear_model import Ridge
+
+# Fill missing values with 0
+X_train_with_0 = X_train.copy()
+X_train_with_0['total_rooms'].fillna(0, inplace=True)
+
+# Train regularized linear regression models with different values of r
+rmse_scores = []
+for r in [0, 0.000001, 0.0001, 0.001, 0.01, 0.1, 1, 5, 10]:
+    ridge = Ridge(alpha=r)
+    ridge.fit(X_train_with_0, y_train)
+
+    y_pred = ridge.predict(X_val)
+    rmse = np.sqrt(np.mean((y_pred - y_val)**2))
+
+    rmse_scores.append(rmse)
+
+# Round the RMSE scores to 2 decimal digits
+rmse_scores = [round(rmse, 2) for rmse in rmse_scores]
+
+# Print the results
+print('RMSE scores:', rmse_scores)
+
+#Question 5:  Shuffling
+import numpy as np
+
+# Set the seed values
+seed_values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+# Initialize a list to store the RMSE scores
+rmse_scores = []
+
+# Iterate over the seed values
+for seed in seed_values:
+
+    # Split the data into train/val/test sets
+    X_train, X_val, X_test, y_train, y_val, y_test = train_test_split(df.drop('price', axis=1), df['price'], test_size=0.4, random_state=seed)
+
+    # Fill missing values with 0
+    X_train_with_0 = X_train.copy()
+    X_train_with_0['total_rooms'].fillna(0, inplace=True)
+
+    # Train a linear regression model without regularization
+    lr = LinearRegression()
+    lr.fit(X_train_with_0, y_train)
+
+    # Evaluate the model on the validation dataset
+    y_pred = lr.predict(X_val)
+    rmse = np.sqrt(np.mean((y_pred - y_val)**2))
+
+    # Append the RMSE score to the list
+    rmse_scores.append(rmse)
+
+# Calculate the standard deviation of the RMSE scores
+std = np.std(rmse_scores)
+
+# Round the standard deviation to 3 decimal digits
+std = round(std, 3)
+
+# Print the standard deviation
+print('Standard deviation of RMSE scores:', std)
+
+#Question 6: RMSE on test
+import pandas as pd
+import numpy as np
+
+# Load the house.csv dataset
+df = pd.read_csv('house.csv')
+
+# Split the data into train/val/test sets with 60%/20%/20% distribution
+X_train, X_val, X_test, y_train, y_val, y_test = train_test_split(df.drop('price', axis=1), df['price'], test_size=0.4, random_state=9)
+
+# Combine the train and validation datasets
+X_train_val = pd.concat([X_train, X_val], ignore_index=True)
+y_train_val = pd.concat([y_train, y_val], ignore_index=True)
+
+# Fill the missing values with 0
+X_train_val_with_0 = X_train_val.copy()
+X_train_val_with_0['total_rooms'].fillna(0, inplace=True)
+
+# Train a linear regression model with r=0.001
+ridge = Ridge(alpha=0.001)
+ridge.fit(X_train_val_with_0, y_train_val)
+
+# Evaluate the model on the test dataset
+y_pred = ridge.predict(X_test)
+rmse = np.sqrt(np.mean((y_pred - y_test)**2))
+
+# Print the RMSE
+print('RMSE on the test dataset:', rmse)
+
