@@ -1,0 +1,282 @@
+# Question 1: ROC AUC feature importance
+#Answer : engine_hp
+#code:
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve, auc
+
+# Load the Car price dataset
+df = pd.read_csv('Car_price.csv')
+
+# Keep only the relevant columns
+df = df[['Make', 'Model', 'Year', 'Engine HP', 'Engine Cylinders', 'Transmission Type', 'Vehicle Style', 'highway MPG', 'city mpg', 'MSRP']]
+
+# Lowercase the column names and replace spaces with underscores
+df.columns = df.columns.str.lower().str.replace(' ', '_')
+
+# Fill the missing values with 0
+df.fillna(0, inplace=True)
+
+# Make the price binary (1 if above the average, 0 otherwise)
+df['above_average'] = (df['msrp'] > df['msrp'].mean()).astype(int)
+
+# Split the data into train/validation/test sets
+X_train, X_test, y_train, y_test = train_test_split(df.drop('above_average', axis=1), df['above_average'], test_size=0.2, random_state=1)
+
+# Calculate the ROC AUC feature importance for each numerical variable
+numerical_features = ['engine_hp', 'engine_cylinders', 'highway_mpg', 'city_mpg']
+auc_scores = {}
+for feature in numerical_features:
+    # Calculate the AUC
+    fpr, tpr, thresholds = roc_curve(y_train, X_train[feature])
+    auc_score = auc(fpr, tpr)
+
+    # Invert the variable if the AUC is less than 0.5
+    if auc_score < 0.5:
+        X_train[feature] *= -1
+
+    # Store the AUC score
+    auc_scores[feature] = auc_score
+
+# Print the AUC scores
+print(auc_scores)
+
+#Question 2: Training the model
+#Answer : 0.979
+#Code:
+#Import the necessary libraries:
+import pandas as pd
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.linear_model import LogisticRegression
+#Load the Car price dataset and keep only the relevant columns:
+df = pd.read_csv('Car_price.csv')
+df = df[['Make', 'Model', 'Year', 'Engine HP', 'Engine Cylinders', 'Transmission Type', 'Vehicle Style', 'highway MPG', 'city mpg', 'MSRP']]
+#Lowercase the column names and replace spaces with underscores:
+df.columns = df.columns.str.lower().str.replace(' ', '_')
+#Fill the missing values with 0:
+df.fillna(0, inplace=True)
+#Make the price binary (1 if above the average, 0 otherwise):
+df['above_average'] = (df['msrp'] > df['msrp'].mean()).astype(int)
+#Split the data into train/validation/test sets:
+X_train, X_test, y_train, y_test = train_test_split(df.drop('above_average', axis=1), df['above_average'], test_size=0.2, random_state=1)
+#Create a DictVectorizer object:
+vectorizer = DictVectorizer()
+#Transform the train and validation data using the DictVectorizer object:
+X_train_encoded = vectorizer.fit_transform(X_train.to_dict(orient='records'))
+X_val_encoded = vectorizer.transform(X_test.to_dict(orient='records'))
+#Create a LogisticRegression object with the specified parameters:
+clf = LogisticRegression(solver='liblinear', C=1.0, max_iter=1000)
+#Fit the LogisticRegression model to the train data:
+clf.fit(X_train_encoded, y_train)
+#Make predictions on the validation data:
+y_val_pred = clf.predict_proba(X_val_encoded)[:, 1]
+#Calculate the AUC of the model on the validation data:
+from sklearn.metrics import roc_auc_score
+auc = roc_auc_score(y_test, y_val_pred)
+
+#Question 3: Precision and Recall
+#Answer :0.28
+#code:
+#Import the necessary libraries:
+import pandas as pd
+from sklearn.metrics import precision_recall_curve, plot_precision_recall_curve
+#Load the Car price dataset and keep only the relevant columns:
+df = pd.read_csv('Car_price.csv')
+df = df[['Make', 'Model', 'Year', 'Engine HP', 'Engine Cylinders', 'Transmission Type', 'Vehicle Style', 'highway MPG', 'city mpg', 'MSRP']]
+#Lowercase the column names and replace spaces with underscores:
+df.columns = df.columns.str.lower().str.replace(' ', '_')
+#Fill the missing values with 0:
+df.fillna(0, inplace=True)
+#Make the price binary (1 if above the average, 0 otherwise):
+df['above_average'] = (df['msrp'] > df['msrp'].mean()).astype(int)
+#Split the data into train/validation/test sets:
+X_train, X_test, y_train, y_test = train_test_split(df.drop('above_average', axis=1), df['above_average'], test_size=0.2, random_state=1)
+#Create a DictVectorizer object:
+vectorizer = DictVectorizer()
+#Transform the train and test data using the DictVectorizer object:
+X_train_encoded = vectorizer.fit_transform(X_train.to_dict(orient='records'))
+X_test_encoded = vectorizer.transform(X_test.to_dict(orient='records'))
+#Create a LogisticRegression object with the specified parameters:
+clf = LogisticRegression(solver='liblinear', C=1.0, max_iter=1000)
+#Fit the LogisticRegression model to the train data:
+clf.fit(X_train_encoded, y_train)
+#Make predictions on the test data:
+y_test_pred = clf.predict_proba(X_test_encoded)[:, 1]
+#Calculate precision and recall for all thresholds from 0.0 to 1.0 with step 0.01:
+precision, recall, thresholds = precision_recall_curve(y_test, y_test_pred)
+#Plot the precision and recall curves:
+import matplotlib.pyplot as plt
+plt.plot(thresholds, precision, label='Precision')
+plt.plot(thresholds, recall, label='Recall')
+plt.xlabel('Threshold')
+plt.ylabel('Precision/Recall')
+plt.legend()
+plt.show()
+
+#Question 4: F1 score
+#Answer: 
+#Code:
+import numpy as np
+
+def compute_f1(precision, recall):
+  f1 = 2 * (precision * recall) / (precision + recall)
+  return f1
+
+# Compute F1 for all thresholds
+f1_scores = []
+for threshold in np.arange(0.0, 1.01, 0.01):
+  precision = precision[thresholds >= threshold]
+  recall = recall[thresholds >= threshold]
+  f1 = compute_f1(precision, recall)
+  f1_scores.append(f1)
+
+# Find the threshold with the highest F1 score
+max_f1_score = max(f1_scores)
+max_f1_threshold = np.arange(0.0, 1.01, 0.01)[np.argmax(f1_scores)]
+
+print('F1 score:', max_f1_score)
+print('Threshold:', max_f1_threshold)
+
+#Question 5: 5-Fold CV
+#Answer : 0.030
+#code:
+#Import the necessary libraries:
+import pandas as pd
+from sklearn.model_selection import KFold
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+#Load the Car price dataset and keep only the relevant columns:
+df = pd.read_csv('Car_price.csv')
+df = df[['Make', 'Model', 'Year', 'Engine HP', 'Engine Cylinders', 'Transmission Type', 'Vehicle Style', 'highway MPG', 'city mpg', 'MSRP']]
+#Lowercase the column names and replace spaces with underscores:
+df.columns = df.columns.str.lower().str.replace(' ', '_')
+#Fill the missing values with 0:
+df.fillna(0, inplace=True)
+#Make the price binary (1 if above the average, 0 otherwise):
+df['above_average'] = (df['msrp'] > df['msrp'].mean()).astype(int)
+#Create a KFold object:
+kf = KFold(n_splits=5, shuffle=True, random_state=1)
+#Initialize a list to store the AUC scores for each fold:
+auc_scores = []
+#Iterate over the different folds:
+for train_index, val_index in kf.split(df):
+  # Split the data into train and validation sets
+  X_train, X_val = df.iloc[train_index], df.iloc[val_index]
+  y_train, y_val = df.iloc[train_index]['above_average'], df.iloc[val_index]['above_average']
+
+  # Create a DictVectorizer object
+  vectorizer = DictVectorizer()
+
+  # Transform the train and validation data using the DictVectorizer object
+  X_train_encoded = vectorizer.fit_transform(X_train.to_dict(orient='records'))
+  X_val_encoded = vectorizer.transform(X_val.to_dict(orient='records'))
+
+  # Create a LogisticRegression object with the specified parameters
+  clf = LogisticRegression(solver='liblinear', C=1.0, max_iter=1000)
+
+  # Fit the LogisticRegression model to the train data
+  clf.fit(X_train_encoded, y_train)
+
+  # Make predictions on the validation data
+  y_val_pred = clf.predict_proba(X_val_encoded)[:, 1]
+
+  # Calculate the AUC of the model on the validation data
+  auc = roc_auc_score(y_val, y_val_pred)
+
+  # Store the AUC score
+  auc_scores.append(auc)
+
+#Calculate the standard deviation of the AUC scores:
+import numpy as np
+std_dev = np.std(auc_scores)
+print('Standard deviation of AUC scores:', std_dev)
+
+#Question 6: Hyperparemeter Tuning
+#Answer : 0.1
+#Code : 
+#Import the necessary libraries:
+import pandas as pd
+from sklearn.model_selection import KFold
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+
+#Load the Car price dataset and keep only the relevant columns:
+df = pd.read_csv('Car_price.csv')
+df = df[['Make', 'Model', 'Year', 'Engine HP', 'Engine Cylinders', 'Transmission Type', 'Vehicle Style', 'highway MPG', 'city mpg', 'MSRP']]
+#Lowercase the column names and replace spaces with underscores:
+df.columns = df.columns.str.lower().str.replace(' ', '_')
+#Fill the missing values with 0:
+df.fillna(0, inplace=True)
+#Make the price binary (1 if above the average, 0 otherwise):
+df['above_average'] = (df['msrp'] > df['msrp'].mean()).astype(int)
+#create a KFold object:
+kf = KFold(n_splits=5, shuffle=True, random_state=1)
+#Initialize a list to store the AUC scores for each C value:
+c_values = [0.01, 0.1, 0.5, 10]
+auc_scores = []
+std_devs = []
+#terate over the different C values:
+for c in c_values:
+  # Create a LogisticRegression object with the specified parameters
+  clf = LogisticRegression(solver='liblinear', C=c, max_iter=1000)
+
+  # Initialize lists to store the AUC scores for each fold
+  fold_auc_scores = []
+
+  # Iterate over the different folds
+  for train_index, val_index in kf.split(df):
+    # Split the data into train and validation sets
+    X_train, X_val = df.iloc[train_index], df.iloc[val_index]
+    y_train, y_val = df.iloc[train_index]['above_average'], df.iloc[val_index]['above_average']
+
+    # Transform the train and validation data using DictVectorizer
+    vectorizer = DictVectorizer()
+    X_train_encoded = vectorizer.fit_transform(X_train.to_dict(orient='records'))
+    X_val_encoded = vectorizer.transform(X_val.to_dict(orient='records'))
+
+    # Fit the LogisticRegression model to the train data
+    clf.fit(X_train_encoded, y_train)
+
+    # Make predictions on the validation data
+    y_val_pred = clf.predict_proba(X_val_encoded)[:, 1]
+
+    # Calculate the AUC of the model on the validation data
+    auc = roc_auc_score(y_val, y_val_pred)
+
+    # Store the AUC score
+    fold_auc_scores.append(auc)
+
+  # Calculate the mean and standard deviation of the AUC scores for this C value
+  mean_auc = np.mean(fold_auc_scores)
+  std_dev = np.std(fold_auc_scores)
+
+  # Store the mean and standard deviation
+  auc_scores.append(mean_auc)
+  std_devs.append(std_dev)
+
+#Find the C value with the highest mean AUC score and the lowest standard deviation:
+# Find the best C value based on mean AUC score
+best_c_index = np.argmax(auc_scores)
+best_c = c_values[best_c_index]
+
+# Find the best C value based on lowest std dev
+best_c_index_std = np.argmin(std_devs)
+best_c_std = c_values[best_c_index_std]
+
+# If there is a tie, select the score with the lowest std
+if auc_scores[best_c_index] == auc_scores[best_c_index_std]:
+  best_c = best_c_std
+
+print('Best C value:', best_c)
+
+
+
+
+
+
+
+
+
+
+
+
