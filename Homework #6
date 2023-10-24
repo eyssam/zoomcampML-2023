@@ -1,0 +1,120 @@
+#Question 1: Most important split feature
+# Import necessary libraries
+import pandas as pd
+from sklearn.tree import DecisionTreeRegressor
+
+# Load the data
+df = pd.read_csv("housing_data.csv")
+
+# Keep only the records where ocean_proximity is either '<1H OCEAN' or 'INLAND'
+df = df[df["ocean_proximity"].isin(["<1H OCEAN", "INLAND"])]
+
+# Fill missing values with zeros
+df = df.fillna(0)
+
+# Apply the log transform to median_house_value
+df["median_house_value"] = np.log(df["median_house_value"])
+
+# Split the data into train and validation sets
+X_train, X_val, y_train, y_val = train_test_split(
+    df.drop("median_house_value", axis=1),
+    df["median_house_value"],
+    test_size=0.2,
+    random_state=1,
+)
+
+# Train a decision tree regressor with max_depth=1
+tree = DecisionTreeRegressor(max_depth=1)
+tree.fit(X_train, y_train)
+
+# Print the feature used for splitting the data
+print(tree.tree_.feature[0])
+
+#Question 2: RMSE for Random Forest
+# Import necessary libraries
+from sklearn.ensemble import RandomForestRegressor
+
+# Train a random forest model with n_estimators=10
+rf = RandomForestRegressor(n_estimators=10, random_state=1)
+rf.fit(X_train, y_train)
+
+# Evaluate the model on the validation dataset
+rmse = np.sqrt(mean_squared_error(y_val, rf.predict(X_val)))
+print(rmse)
+
+#Question 3: n_estimators
+# Define a function to calculate the RMSE on the validation dataset
+def evaluate_model(n_estimators):
+    rf = RandomForestRegressor(n_estimators=n_estimators, random_state=1)
+    rf.fit(X_train, y_train)
+    rmse = np.sqrt(mean_squared_error(y_val, rf.predict(X_val)))
+    return rmse
+
+# Calculate the RMSE for different values of n_estimators
+rmse_values = []
+for n_estimators in range(10, 201, 10):
+    rmse_values.append(evaluate_model(n_estimators))
+
+# Plot the RMSE values
+plt.plot(rmse_values)
+plt.xlabel("Nombre d'estimateurs")
+plt.ylabel("RMSE")
+plt.show()
+
+#Question 4: max_depth
+# Define a function to calculate the mean RMSE for a given max_depth
+def evaluate_model(max_depth):
+    rmse_values = []
+    for n_estimators in range(10, 201, 10):
+        rmse_values.append(evaluate_model(n_estimators, max_depth))
+    return np.mean(rmse_values)
+
+# Calculate the mean RMSE for different values of max_depth
+rmse_values = []
+for max_depth in [10, 15, 20, 25]:
+    rmse_values.append(evaluate_model(max_depth))
+
+# Print the best max_depth
+print(rmse_values)
+
+#Question 5: feature importance
+# Train a random forest model with n_estimators=10 and max_depth=20
+rf = RandomForestRegressor(n_estimators=10, max_depth=20, random_state=1)
+rf.fit(X_train, y_train)
+
+# Calculate the feature importances
+feature_importances = rf.feature_importances_
+
+# Print the most important feature
+print(feature_importances.argmax())
+
+#Question 6: eta in XGBoost
+# Import necessary libraries
+import xgboost as xgb
+
+# Create DMatrix for train and validation
+X_train_dmatrix = xgb.DMatrix(X_train, label=y_train)
+X_val_dmatrix = xgb.DMatrix(X_val, label=y_val)
+
+# Create a watchlist
+watchlist = [(X_train_dmatrix, "train"), (X_val_dmatrix, "val")]
+
+# Train a model with eta=0.3
+model_03 = xgb.train(
+    params={"eta": 0.3, "max_depth": 6, "min_child_weight": 1, "objective": "reg:squarederror"},
+    dtrain=X_train_dmatrix,
+    num_rounds=100,
+    evals=watchlist,
+)
+
+# Train a model with eta=0.1
+model_01 = xgb.train(
+    params={"eta": 0.1, "max_depth": 6, "min_child_weight": 1, "objective": "reg:squarederror"},
+    dtrain=X_train_dmatrix,
+    num_rounds=100,
+    evals=watchlist,
+)
+
+# Print the RMSE on the validation dataset for each model
+print("RMSE for eta=0.3:", model_03.evals_result()["val"]["rmse"][-1])
+print("RMSE for eta=0.1:", model_01.evals_result()["val"]["rmse"][-1])
